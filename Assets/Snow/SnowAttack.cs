@@ -1,33 +1,20 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class SnowAttack : MonoBehaviour
 {
-    
-    public static EventHandler <OnDiggingSnowEventArgs>OnDiggingSnow;
 
-    public static EventHandler <OnBallThrowEventArgs>OnBallThrow;
-    public class OnDiggingSnowEventArgs : EventArgs
-    {
-        public bool isDiggingSnow;
-    }
-    public class OnBallThrowEventArgs : EventArgs
-    {
-        public bool isThrowingBall;
-    }
-    
-    
-    [SerializeField] private  GameObject snowBallPrefab;
-    [SerializeField] private GameObject playerHand;
+
+    [SerializeField] private Transform playerHand;
     [SerializeField] private float snowCollectionDelay;
-    [SerializeField] private float snowBallThrowSpeed;
-    private bool _isDiggingSnow=false;
-    private bool _isSnowBallInHand=false;
-    private GameObject snowBall;
+    [SerializeField] private float snowballThrowSpeed;
     [SerializeField] private float throwAnimationDelay;
-   [SerializeField] private Health playerHealth;
+    
+    private SnowBallFactory _snowBallFactory;
+    private bool _isDiggingSnow = false;
+    private bool _isThrowingSnow = false;
+    private bool _isSnowBallInHand;
+    private SnowBall _snowBall;
 
     private void OnEnable()
     {
@@ -38,85 +25,72 @@ public class SnowAttack : MonoBehaviour
     {
         InputHub.OnScreenContact -= ThrowSnowBallOnTapIfPossible;
     }
-
+    private void Start()
+    {
+        _snowBallFactory = new SnowBallFactory();
+    }
+    
     private void ThrowSnowBallOnTapIfPossible(object sender, InputHub.OnScreenContactEventArgs e)
     {
-        var targetPosition = e.TouchWorldPosition;
-
-       
+        if(_snowBall==null)return;
         
-            
-        if(snowBall==null)return;
-        var velocity = CalculateLaunchVelocity(playerHand.transform.position, targetPosition, snowBallThrowSpeed);
-        transform.forward = new Vector3(velocity.normalized.x, 0, velocity.normalized.z);
-        OnBallThrow?.Invoke(this, new OnBallThrowEventArgs {isThrowingBall = true});
+        var targetPosition = e.TouchWorldPosition;
+        LookAtTarget(targetPosition);
+        
+        _isThrowingSnow = true;
         StartCoroutine(ThrowAnimationDelay(targetPosition));
     }
 
     private IEnumerator ThrowAnimationDelay(Vector3 targetPosition)
     {
         yield return new WaitForSeconds(throwAnimationDelay/2);
-       var velocity = CalculateLaunchVelocity(playerHand.transform.position, targetPosition, snowBallThrowSpeed);
-        snowBall.transform.SetParent(null);
-        snowBall.GetComponent<Rigidbody>().isKinematic = false;
-        snowBall.GetComponent<Rigidbody>().velocity = velocity;
-        snowBall.GetComponent<SphereCollider>().isTrigger = false;
-        snowBall = null;
-        _isSnowBallInHand = false;
+        var velocity = TrajectoryUtility.CalculateVelocity(playerHand.transform.position, targetPosition, snowballThrowSpeed);
+        ThrowSnowBall(velocity);
         yield return new WaitForSeconds(throwAnimationDelay/2);
-        OnBallThrow?.Invoke(this, new OnBallThrowEventArgs {isThrowingBall = false});
+        _isThrowingSnow =false;
     }
-
-    private Vector3 CalculateLaunchVelocity(Vector3 start, Vector3 end, float speed)
+    private void LookAtTarget(Vector3 targetPosition)
     {
-        Vector3 displacement = end - start;
-        Vector3 displacementXZ = new Vector3(displacement.x, 0, displacement.z); 
+        var velocity = TrajectoryUtility.CalculateVelocity(playerHand.transform.position, targetPosition, snowballThrowSpeed);
 
-        float horizontalDistance = displacementXZ.magnitude; 
-        float verticalDistance = displacement.y; 
-        float gravity = Mathf.Abs(Physics.gravity.y);
-
-       
-        float time = horizontalDistance / speed;
-
-        
-        float velocityY = (verticalDistance + 0.5f * gravity * time * time) / time;
-        Vector3 velocityXZ = displacementXZ.normalized * speed; 
-
-        return new Vector3(velocityXZ.x, velocityY, velocityXZ.z);
+        transform.forward = new Vector3(velocity.normalized.x, 0, velocity.normalized.z);
+    }
+    private void ThrowSnowBall(Vector3 velocity)
+    {
+        _snowBall.ChangeSnowBallInToThrowState(velocity);
+        _snowBall = null;
+        _isSnowBallInHand = false;
     }
 
-    public void CreateSnowBall()
+
+    public void DigSnowBall()
     {
         if(_isSnowBallInHand)return;
         _isDiggingSnow = true;
-        OnDiggingSnow?.Invoke(this, new OnDiggingSnowEventArgs {isDiggingSnow = _isDiggingSnow });
-        StartCoroutine(SnowCollectionDelay());
+        StartCoroutine(CreateSnowBallAfterDigging());
     }
 
-    private IEnumerator SnowCollectionDelay()
+    private IEnumerator CreateSnowBallAfterDigging()
     {
         yield return new WaitForSeconds(snowCollectionDelay);
+       _snowBall= _snowBallFactory.Create(playerHand, true);
         _isDiggingSnow = false;
-        OnDiggingSnow?.Invoke(this, new OnDiggingSnowEventArgs {isDiggingSnow = _isDiggingSnow });
-        snowBall = Instantiate(snowBallPrefab);
-        snowBall.GetComponent<SnowBall>().isPlayerBall = true;
-        snowBall.transform.position = playerHand.transform.position;
-        snowBall.transform.rotation = playerHand.transform.rotation;
-        snowBall.transform.SetParent( playerHand.transform);
-        snowBall.GetComponent<SphereCollider>().isTrigger = true;
-     //   snowBall.SetActive(false);
         _isSnowBallInHand = true;
     }
 
-    private void OnCollisionEnter(Collision other)
+    public bool IsDiggingSnow()
     {
-        if (other.transform.TryGetComponent<SnowBall>(out SnowBall snowBall))
-        {
-            if (!snowBall.isPlayerBall)
-            {
-                playerHealth.Damage();
-            }
-        }
+        return _isDiggingSnow;
+    }
+
+    public bool IsThrowingSnow()
+    {
+        return _isThrowingSnow;
+    }
+
+    public bool IsSnowBallInHand()
+    {
+        return _isSnowBallInHand;
     }
 }
+

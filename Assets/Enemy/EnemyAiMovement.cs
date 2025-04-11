@@ -13,14 +13,14 @@ public class EnemyAiMovement : MonoBehaviour
     void Update()
     {
 
-        if ((Vector3.Distance(transform.position, playerTransform.position) > chasePlayerAtSpecificDistance )  && !enemyAiSnowAttack.IsDigging()  )
+        if ((Vector3.Distance(transform.position, playerTransform.position) > chasePlayerAtSpecificDistance )  && !enemyAiSnowAttack.IsDiggingSnow() && !enemyAiSnowAttack.IsThrowingSnow()   )
         {
             MoveTowardsPlayerAtSpecificDistane();
-            Debug.Log("MoveTowardsPlayerAtSpecificDistance");
+           
         }
         else
         {
-            Debug.Log("Stop");
+  
             StopAtPosition();
         }
     }

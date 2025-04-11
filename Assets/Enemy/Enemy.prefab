@@ -1057,6 +1057,7 @@ MonoBehaviour:
   enemyAnimator: {fileID: 1276446590534024528}
   enemyAiMovement: {fileID: 1912523010931813412}
   enemyAiSnowAttack: {fileID: 0}
+  enemyHealth: {fileID: 0}
 --- !u!1 &3157033104032126157
 GameObject:
   m_ObjectHideFlags: 0
@@ -1256,15 +1257,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 97d0be7951229a8458eeba2a0f717568, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  snowBallPrefab: {fileID: 7379908895081834618, guid: 516ba941b9933e3468b0b63d5eb85d13,
-    type: 3}
-  enemyHand: {fileID: 1467599462283525871}
+  enemyHand: {fileID: 111487400386653642}
   snowCollectionDelay: 3
   snowBallThrowSpeed: 5
   throwAnimationDelay: 1.8
   enemyAiMovement: {fileID: 1912523010931813412}
   player: {fileID: 0}
   attackDistance: 0
+  enemyHealth: {fileID: 0}
 --- !u!114 &1912523010931813412
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1282,7 +1282,7 @@ MonoBehaviour:
   enemyAgent: {fileID: 1994275451429920919}
   playerTransform: {fileID: 0}
   chasePlayerAtSpecificDistance: 3
-  enemyAiSnowAttack: {fileID: 0}
+  enemyAiSnowAttack: {fileID: 3867013977292576484}
 --- !u!65 &9150862511324053582
 BoxCollider:
   m_ObjectHideFlags: 0

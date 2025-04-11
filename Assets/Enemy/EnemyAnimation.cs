@@ -12,8 +12,8 @@ public class EnemyAnimation : MonoBehaviour
     {
         
         enemyAnimator.SetBool("isRunning",enemyAiMovement.IsRunning());
-       enemyAnimator.SetBool("isDigging",enemyAiSnowAttack.IsCollectingSnow());
-       enemyAnimator.SetBool("isThrowing",enemyAiSnowAttack.IsThrowing());
+       enemyAnimator.SetBool("isDigging",enemyAiSnowAttack.IsDiggingSnow());
+       enemyAnimator.SetBool("isThrowing",enemyAiSnowAttack.IsThrowingSnow());
        enemyAnimator.SetBool("isDead",!enemyHealth.isAlive());
 
        if (!enemyHealth.isAlive())
